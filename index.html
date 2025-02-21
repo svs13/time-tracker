@@ -98,12 +98,20 @@ H:<span id="stopwatch-hours"></span><br>
     }
 
     function startTimer() {
+        if (intervalId) {
+            return;
+        }
+
         lastTime = Date.now();
         addInterval();
     }
 
     function stopTimer() {
-        clearInterval(intervalId);
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+
         timerSeconds = 0;
         renderTime(timerSeconds);
     }
