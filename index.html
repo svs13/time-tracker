@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" href="favicon-32x32.png" type="image/x-icon">
+
+    <style>
+        /*html, body {*/
+        /*    height: 100%;*/
+        /*}*/
+
+        /*html {*/
+        /*    display: table;*/
+        /*    margin: auto;*/
+        /*}*/
+
+        /*body {*/
+        /*    display: table-cell;*/
+        /*    vertical-align: middle;*/
+        /*}*/
+        body {
+            background-color: powderblue;
+        }
+        button {
+            font-size: 15pt;
+            padding: 10px;
+            min-width: 75px;
+        }
+        #stopwatch-time,#stopwatch-hours {
+            font-size: 75pt
+        }
+
+    </style>
+
+    <title>Timer</title>
+</head>
+<body>
+
+T:<span id="stopwatch-time"></span><br>
+H:<span id="stopwatch-hours"></span><br>
+<button id="add-1m-button" onclick="addSeconds(60)">+1м</button>
+<button id="add-10m-button" onclick="addSeconds(600)">+10м</button>
+<button id="add-1h-button" onclick="addSeconds(3600)">+1ч</button><br>
+<button id="sub-1m-button" onclick="addSeconds(-60)">-1м</button>
+<button id="sub-10m-button" onclick="addSeconds(-600)">-10м</button>
+<button id="sub-1h-button" onclick="addSeconds(-3600)">-1ч</button><br>
+<button id="start-button" onclick="startTimer();">▶️</button>
+<button id="pause-button" onclick="pauseTimer()">⏸</button><br>
+
+<br>
+
+<label for="track-task-number">Task number:</label><br>
+<input id="track-task-number"></input><br>
+<label for="track-comment">Task comment:</label><br>
+<input id="track-comment"></input><br>
+
+<br>
+
+<button id="track-time-button" onclick="trackTime()">✍️</button><br>
+
+<br><br><br>
+
+<button id="stop-button" onclick="stopTimer()">⏹</button><br>
+
+
+<script type="application/javascript">
+    var timerSeconds = 0;
+    var intervalId = null;
+    var lastTime = null;
+    const urlTemplate = 'https://redmine.private.kvado.ru/issues/{taskNumber}/time_entries/new?time_entry[hours]={hours}&time_entry[comments]={comment}';
+
+    function renderTime(seconds) {
+        let time = secondsToTime(seconds);
+        let stopwatchTime = document.getElementById('stopwatch-time');
+        stopwatchTime.innerHTML = time;
+        let hours = seconds / 60 / 60;
+        let stopwatchHours = document.getElementById('stopwatch-hours');
+        stopwatchHours.innerHTML = hours.toFixed(3);
+    }
+
+    function secondsToTime(seconds) {
+        const date = new Date(null);
+        date.setSeconds(seconds); // specify value for SECONDS here
+        return date.toISOString().slice(11, 19);
+    }
+
+    function addInterval() {
+        intervalId = setInterval(function () {
+            let nowTime = Date.now();
+            let delta = nowTime - lastTime; // milliseconds elapsed since start
+            lastTime = nowTime;
+            timerSeconds += Math.floor(delta / 1000); // in seconds
+            renderTime(timerSeconds);
+        }, 1000);
+    }
+
+    function startTimer() {
+        lastTime = Date.now();
+        addInterval();
+    }
+
+    function stopTimer() {
+        clearInterval(intervalId);
+        timerSeconds = 0;
+        renderTime(timerSeconds);
+    }
+
+    function pauseTimer() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+    }
+
+    function addSeconds(seconds) {
+        timerSeconds += seconds;
+        renderTime(timerSeconds);
+    }
+
+    function trackTime() {
+        let taskNumber = document.getElementById('track-task-number').value;
+
+        if (!taskNumber) {
+            alert('Set task number!');
+            return;
+        }
+
+        let comment = document.getElementById('track-comment').value;
+
+        if (!comment) {
+            alert('Set comment!');
+            return;
+        }
+
+        if (!timerSeconds) {
+            alert('Timer seconds is zero!');
+            return;
+        }
+
+        let hours = timerSeconds / 60 / 60;
+        /** Округляем до ближайшего большего получаса */
+        let roundHours = Math.ceil(hours * 2) / 2;
+
+        let url = urlTemplate
+            .replace('{taskNumber}', taskNumber)
+            .replace('{hours}', roundHours)
+            .replace('{comment}', comment)
+
+        window.open(url, '_blank');
+    }
+
+    timerSeconds = 0;
+    renderTime(timerSeconds);
+</script>
+
+</body>
+</html>
